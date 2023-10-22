@@ -1,5 +1,5 @@
 const ConsumoModel = require("../models/ListaConsumosModels")
-const {CreateConsumo , deleteConsumo, updateConsumo }= require("../repository/ConsumosRepository")
+const {CreateConsumo , deleteConsumo, updateConsumo, FindAllConsumo }= require("../repository/ConsumosRepository")
 
 async function create(req, res) {
     const params = req.body;
@@ -38,9 +38,17 @@ async function updateConsumoData(req, res){
   const response = await updateConsumo(id, consumo);
   res.status(response.status).send(response);
 }
+
+async function findAll(req, res){
+  const response = await FindAllConsumo();
+  res.status(response.status).send(response);
+}
   
 module.exports = {
-    create, deleteConsumoData, updateConsumoData,
+    create, 
+    deleteConsumoData, 
+    updateConsumoData, 
+    findAll,
 };
 
 

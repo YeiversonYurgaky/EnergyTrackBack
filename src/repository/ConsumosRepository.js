@@ -61,3 +61,23 @@ module.exports.updateConsumo = async (id, consumo) =>{
       })
   });
 }
+
+module.exports.FindAllConsumo = async () =>{
+  return new Promise((resolve, reject) => {
+      ConsumoModel
+      .find()
+      .then((resp)=>{
+          Response.status = 200;
+          Response.message = "Registros Encontrados";
+          Response.result = resp;
+          resolve(Response);
+      })
+      .catch((err) =>{
+          console.log("error:", err)
+          Response.status = 500;
+          Response.message = "Ocurrio un error en el servidor";
+          Response.result = err;
+          reject(Response);
+      })
+  });
+}
