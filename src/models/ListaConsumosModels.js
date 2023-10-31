@@ -8,6 +8,7 @@ const ListaConsumosSchema = schema(
     {
         consumo_energetico : Number,
         numero_de_piso: Number,
+        fecha: Date,
     }
 );
 
