@@ -38,6 +38,13 @@ async function create(req, res) {
 async function login(req, res){
   const params = req.body;
 
+  if (!params.usuario || !params.password) {
+    res
+      .status(400)
+      .send({ message: "Por favor, proporcione un usuario y una contraseña." });
+    return;
+  }
+
   const user = await FindOneUsername(params.usuario);
   if(user){
       //Logueo

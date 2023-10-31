@@ -14,6 +14,14 @@ async function create(req, res) {
       return;
     }
 
+    if (isNaN(params.consumo_energetico) || isNaN(params.numero_de_piso)) {
+      res
+        .status(400)
+        .send({ message: "Los campos solo pueden contener números" });
+      return;
+    }
+
+    consumo.fecha = params.fecha;
     consumo.consumo_energetico = params.consumo_energetico
     consumo.numero_de_piso = params.numero_de_piso
 
