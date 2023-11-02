@@ -1,0 +1,8 @@
+version: "3.9"
+services:
+  energy:
+    container_name: energy-back
+    build:
+      context: ./
+    ports:
+      - 3272:3272
