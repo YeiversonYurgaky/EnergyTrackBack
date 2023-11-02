@@ -4,7 +4,9 @@
   "description": "api de usuarios y consumos",
   "main": "index.js",
   "scripts": {
-    "dev": "nodemon index.js"
+    "dev": "nodemon index.js",
+    "test": "jest --coverage --verbose --runInBand --detectOpenHandles --force-exit",
+    "sonar": "sonar-scanner"
   },
   "author": "Yeiverson Yurgaky, Karolyne Renteria, Milady Lopez",
   "license": "ISC",
