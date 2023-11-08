@@ -7,7 +7,7 @@ require("dotenv").config();
 
 //Routes
 const UsuariosRoutes = require("./src/routes/UserRoutes");
-const ListaConsumosRoutes = require("./src/routes/ListaConsumosRoutes")
+const ListaConsumosRoutes = require("./src/routes/ListaConsumosRoutes");
 
 const app = express();
 
@@ -48,7 +48,7 @@ mongoose
 
 //Setting Routes
 app.use("/api", UsuariosRoutes);
-app.use("/api", ListaConsumosRoutes)
+app.use("/api", ListaConsumosRoutes);
 
 //Export
 module.exports = app;
