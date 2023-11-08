@@ -1,5 +1,5 @@
 const UserModel = require("../models/UsuariosModels");
-const { CreateUser,FindOneUsername} = require("../repository/UserRepository");
+const { CreateUser, FindOneUsername } = require("../repository/UserRepository");
 const bcrypt = require("bcrypt-nodejs");
 
 // Registrar/Crear usuarios
@@ -23,9 +23,7 @@ async function create(req, res) {
     if (hash) {
       user.nombres = params.nombres;
       user.apellidos = params.apellidos;
-      user.telefono = params.telefono;
       user.email = params.email;
-      user.edad = params.edad;
       user.usuario = params.usuario;
       user.password = hash;
 
@@ -35,7 +33,7 @@ async function create(req, res) {
   });
 }
 
-async function login(req, res){
+async function login(req, res) {
   const params = req.body;
 
   if (!params.usuario || !params.password) {
@@ -46,20 +44,25 @@ async function login(req, res){
   }
 
   const user = await FindOneUsername(params.usuario);
-  if(user){
-      //Logueo
-      bcrypt.compare(params.password, user.result.password, function (err, check) {
-          if(check){
-              res.status(200).send({message:"el usuario se encuentra logueado"});
-          }else{
-              res.status(400).send({message:"Usuario o contraseña Invalida 1"});
-          }
-      });    
-  }else{
-      res.status(400).send({message:"Usuario o contraseña Invalida"});
+  if (user) {
+    //Logueo
+    bcrypt.compare(
+      params.password,
+      user.result.password,
+      function (err, check) {
+        if (check) {
+          res.status(200).send({ message: "el usuario se encuentra logueado" });
+        } else {
+          res.status(400).send({ message: "Usuario o contraseña Invalida 1" });
+        }
+      }
+    );
+  } else {
+    res.status(400).send({ message: "Usuario o contraseña Invalida" });
   }
 }
 
 module.exports = {
-  create, login, 
+  create,
+  login,
 };
