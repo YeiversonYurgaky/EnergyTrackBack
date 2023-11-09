@@ -1,83 +1,146 @@
-const { FindOneUsername, CreateUser } = require("../repository/UserRepository");
-const { Response } = require("../utils/Response");
-const { mockRequest, mockResponse } = require("../test/mocks/mocks");
+const { CreateUser, FindOneUsername } = require("../repository/UserRepository");
+const UserModel = require("../models/UsuariosModels");
 const { create, login } = require("../controllers/UsuariosController");
-
-jest.mock("../repository/UserRepository");
+const { mockRequest, mockResponse } = require("../test/mocks/mocks");
 const bcrypt = require("bcrypt-nodejs");
 
-const createMock = {
-  status: 200,
-  message: "Registros Encontrados",
-  result: [
-    {
-      _id: "651dc5e8016dc5b14c0bdda5",
-      password: "$2a$10$zRiVr9OjycUc/YcDWXF/4elHo7dJglBEAfrJKhfWQ/9rJ252KGP/W",
-      nombres: "stiven",
-      apellidos: "barajas",
-      email: "brayan@gmail.com",
-      usuario: "stiven",
-    },
-  ],
-};
-
-const CreateUserMock = {
-  status: 201,
-  message: "Se ha creado el Usuario Correctamente",
-  result: {
-    _id: "65495a877db6fd05da1c7193",
-    nombres: "jest",
-    apellidos: "jest",
-    email: "jest@gmail.1com",
-    usuario: "jest",
-    password: "$2a$10$hZpp2AFtvI.04KR9QEmCH.RsrdhE5M.aM2cvXRuNfF8.0LKr5v85S",
-    __v: 0,
-  },
-};
+jest.mock("../../node_modules/bcrypt-nodejs");
+jest.mock("../repository/UserRepository");
+jest.mock("../models/UsuariosModels", () => {
+  return jest.fn().mockImplementation(() => {
+    return {};
+  });
+});
 
 describe("Test Users Controller", () => {
+  let req, res;
+
   beforeEach(() => {
+    req = mockRequest();
+    res = mockResponse();
     jest.clearAllMocks();
   });
 
-  it("should if fields are missing", async () => {
-    let req = mockRequest({}); // Simula que faltan campos en la solicitud
-    const res = mockResponse();
+  it("should return 404 if required fields are missing", async () => {
+    req.body = { nombres: "stiven" }; // Not all required fields are provided
     await create(req, res);
-    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.status).toHaveBeenCalledWith(404);
     expect(res.send).toHaveBeenCalledWith({
       message: "Todos los campos son requeridos",
     });
   });
 
-  // it("should create user", async () => {
-  //   const req = mockRequest();
-  //   const res = mockResponse();
-  //   CreateUser.mockReturnValueOnce(CreateUserMock);
+  it("should create user and return 200 status on success", async () => {
+    // Mock bcrypt hash to resolve with a fake hash
+    bcrypt.hash.mockImplementation(
+      (password, saltOrRounds, options, callback) => {
+        callback(null, "hashedpassword");
+      }
+    );
 
-  //   await create(req, res);
-  //   expect(create).toHaveBeenCalledWith(CreateUserMock);
-  //   expect(res.status).toHaveBeenCalledWith(200);
-  //   expect(res.send).toHaveBeenCalledWith(CreateUserMock);
-  // });
-  it("should create fail user", async () => {
-    const req = mockRequest();
-    req.params.password = "123";
-    req.params.nombres = "stiven";
-    req.params.apellidos = "barajas";
-    req.params.email = "brayan@gmail.com";
-    req.params.usuario = "stiven";
+    req.body = {
+      nombres: "stiven",
+      apellidos: "barajas",
+      usuario: "stiven",
+      password: "123",
+      email: "brayan@gmail.com",
+    };
 
-    const res = mockResponse();
-
-    Response.message = createMock.message;
-    Response.status = createMock.status;
-    Response.result = createMock.result;
-
-    CreateUser.mockReturnValueOnce(createMock);
+    // Mock CreateUser to simulate successful user creation
+    CreateUser.mockResolvedValue({
+      status: 200,
+      message: "User created successfully",
+    });
 
     await create(req, res);
 
-    expect(res.status).toHaveBeenCalledWith(400);
+    expect(UserModel).toHaveBeenCalledTimes(1); // UserModel constructor should be called
+    expect(CreateUser).toHaveBeenCalledWith(expect.any(Object)); // CreateUser should be called with a user object
+    expect(res.status).toHaveBeenCalledWith(200); // Expect a 200 status code
+    expect(res.send).toHaveBeenCalledWith({
+      status: 200,
+      message: "User created successfully",
+    });
+  });
+});
+
+describe("Test Login Controller", () => {
+  let req, res;
+
+  beforeEach(() => {
+    req = mockRequest();
+    res = mockResponse();
+    jest.clearAllMocks();
+  });
+
+  it("should return 404 if username or password is missing", async () => {
+    req.body = { usuario: "stiven" }; // Password is missing
+    await login(req, res);
+    expect(res.status).toHaveBeenCalledWith(404);
+    expect(res.send).toHaveBeenCalledWith({
+      message: "Por favor, proporcione un usuario y una contraseña.",
+    });
+  });
+
+  it("should return 200 if username and password are correct", async () => {
+    req.body = {
+      usuario: "stiven",
+      password: "123",
+    };
+
+    // Mock FindOneUsername to simulate finding a user
+    const mockUser = { result: { password: "hashedpassword" } };
+    FindOneUsername.mockResolvedValue(mockUser);
+
+    // Mock bcrypt compare to simulate a successful password match
+    bcrypt.compare.mockImplementation((password, hash, callback) => {
+      callback(null, true); // The 'true' signifies a successful match
+    });
+
+    await login(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(200);
+    expect(res.send).toHaveBeenCalledWith({
+      message: "el usuario se encuentra logueado",
+    });
+  });
+
+  it("should return 404 if username is correct but password is incorrect", async () => {
+    req.body = {
+      usuario: "stiven",
+      password: "incorrectpassword",
+    };
+
+    const mockUser = { result: { password: "hashedpassword" } };
+    FindOneUsername.mockResolvedValue(mockUser);
+
+    // Mock bcrypt compare to simulate an unsuccessful password match
+    bcrypt.compare.mockImplementation((password, hash, callback) => {
+      callback(null, false); // The 'false' signifies a failed match
+    });
+
+    await login(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(404);
+    expect(res.send).toHaveBeenCalledWith({
+      message: "Usuario o contraseña Invalida 1",
+    });
+  });
+
+  it("should return 404 if username does not exist", async () => {
+    req.body = {
+      usuario: "nonexistentuser",
+      password: "123",
+    };
+
+    // Simulate user not found
+    FindOneUsername.mockResolvedValue(null);
+
+    await login(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(404);
+    expect(res.send).toHaveBeenCalledWith({
+      message: "Usuario o contraseña Invalida",
+    });
   });
 });

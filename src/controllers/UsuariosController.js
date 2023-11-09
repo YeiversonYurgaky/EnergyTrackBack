@@ -14,7 +14,7 @@ async function create(req, res) {
     !params.usuario ||
     !params.password
   ) {
-    res.status(400).send({ message: "Todos los campos son requeridos" });
+    res.status(404).send({ message: "Todos los campos son requeridos" });
     return;
   }
 
@@ -38,7 +38,7 @@ async function login(req, res) {
 
   if (!params.usuario || !params.password) {
     res
-      .status(400)
+      .status(404)
       .send({ message: "Por favor, proporcione un usuario y una contraseña." });
     return;
   }
@@ -53,12 +53,12 @@ async function login(req, res) {
         if (check) {
           res.status(200).send({ message: "el usuario se encuentra logueado" });
         } else {
-          res.status(400).send({ message: "Usuario o contraseña Invalida 1" });
+          res.status(404).send({ message: "Usuario o contraseña Invalida 1" });
         }
       }
     );
   } else {
-    res.status(400).send({ message: "Usuario o contraseña Invalida" });
+    res.status(404).send({ message: "Usuario o contraseña Invalida" });
   }
 }
 
