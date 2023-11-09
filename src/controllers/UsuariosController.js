@@ -12,7 +12,8 @@ async function create(req, res) {
     !params.nombres ||
     !params.apellidos ||
     !params.usuario ||
-    !params.password
+    !params.password ||
+    !params.email
   ) {
     res.status(404).send({ message: "Todos los campos son requeridos" });
     return;
@@ -53,7 +54,7 @@ async function login(req, res) {
         if (check) {
           res.status(200).send({ message: "el usuario se encuentra logueado" });
         } else {
-          res.status(404).send({ message: "Usuario o contraseña Invalida 1" });
+          res.status(404).send({ message: "Usuario o contraseña Invalida" });
         }
       }
     );

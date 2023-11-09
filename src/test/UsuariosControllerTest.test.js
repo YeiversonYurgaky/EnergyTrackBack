@@ -123,7 +123,7 @@ describe("Test Login Controller", () => {
 
     expect(res.status).toHaveBeenCalledWith(404);
     expect(res.send).toHaveBeenCalledWith({
-      message: "Usuario o contraseña Invalida 1",
+      message: "Usuario o contraseña Invalida",
     });
   });
 
