@@ -1,7 +1,7 @@
 const UserModel = require("../models/UsuariosModels");
 const { CreateUser, FindOneUsername } = require("../repository/UserRepository");
 const bcrypt = require("bcrypt-nodejs");
-
+const jwt = require("../utils/jwt");
 // Registrar/Crear usuarios
 async function create(req, res) {
   const params = req.body;
@@ -52,7 +52,12 @@ async function login(req, res) {
       user.result.password,
       function (err, check) {
         if (check) {
-          res.status(200).send({ message: "el usuario se encuentra logueado" });
+          res
+            .status(200)
+            .send({
+              message: "el usuario se encuentra logueado",
+              token: jwt.createToken(user.result),
+            });
         } else {
           res.status(404).send({ message: "Usuario o contraseña Invalida" });
         }
