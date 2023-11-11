@@ -3,6 +3,10 @@ const UserModel = require("../models/UsuariosModels");
 const { create, login } = require("../controllers/UsuariosController");
 const { mockRequest, mockResponse } = require("../test/mocks/mocks");
 const bcrypt = require("bcrypt-nodejs");
+const jwt = require("../utils/jwt");
+const jwtsimple = require("jwt-simple");
+const moment = require("moment");
+const { createToken, verifyToken } = require("../utils/jwt");
 
 jest.mock("../../node_modules/bcrypt-nodejs");
 jest.mock("../repository/UserRepository");
@@ -97,12 +101,20 @@ describe("Test Login Controller", () => {
       callback(null, true); // The 'true' signifies a successful match
     });
 
+    // Mock createToken using jest.spyOn
+    const createTokenMock = jest.spyOn(jwt, "createToken");
+    createTokenMock.mockReturnValue("fakeToken");
+
     await login(req, res);
 
     expect(res.status).toHaveBeenCalledWith(200);
     expect(res.send).toHaveBeenCalledWith({
       message: "el usuario se encuentra logueado",
+      token: "fakeToken",
     });
+
+    // Restaurar la implementación original después de la prueba
+    createTokenMock.mockRestore();
   });
 
   it("should return 404 if username is correct but password is incorrect", async () => {
@@ -142,5 +154,59 @@ describe("Test Login Controller", () => {
     expect(res.send).toHaveBeenCalledWith({
       message: "Usuario o contraseña Invalida",
     });
+  });
+});
+
+describe("JWT Functions", () => {
+  const mockUser = {
+    _id: "fakeUserId",
+    nombres: "John",
+    apellidos: "Doe",
+    email: "john.doe@example.com",
+  };
+
+  it("should create a valid token", () => {
+    const token = createToken(mockUser);
+
+    // Decode the token to inspect its contents
+    const decodedToken = jwtsimple.decode(
+      token,
+      "VWP&q6gAt3W!84k3k^bMxuySWwywU$36",
+      "HS256"
+    );
+
+    // Ensure that the decoded token has the expected properties
+    expect(decodedToken.sub).toBe(mockUser._id);
+    expect(decodedToken.nombres).toBe(mockUser.nombres);
+    expect(decodedToken.apellidos).toBe(mockUser.apellidos);
+    expect(decodedToken.email).toBe(mockUser.email);
+    expect(decodedToken.role).toBe("admin");
+    expect(decodedToken.iat).toBeDefined();
+    expect(decodedToken.exp).toBeDefined();
+  });
+
+  it("should verify a valid token", () => {
+    // Create a token to be verified
+    const token = createToken(mockUser);
+
+    // Verify the token
+    const verifiedUser = verifyToken(token);
+
+    // Ensure that the verified user has the expected properties
+    expect(verifiedUser.sub).toBe(mockUser._id);
+    expect(verifiedUser.nombres).toBe(mockUser.nombres);
+    expect(verifiedUser.apellidos).toBe(mockUser.apellidos);
+    expect(verifiedUser.email).toBe(mockUser.email);
+    expect(verifiedUser.role).toBe("admin");
+  });
+
+  it("should throw an error for an invalid token", () => {
+    // Create an intentionally invalid token
+    const invalidToken = "invalid.token.string";
+
+    // Attempt to verify the invalid token
+    expect(() => {
+      verifyToken(invalidToken);
+    }).toThrowError("Unexpected token � in JSON at position 0"); // Ajusta esto según el mensaje de error real de tu aplicación
   });
 });
