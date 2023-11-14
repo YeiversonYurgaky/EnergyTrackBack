@@ -1,5 +1,9 @@
 const UserModel = require("../models/UsuariosModels");
-const { CreateUser, FindOneUsername } = require("../repository/UserRepository");
+const {
+  CreateUser,
+  FindOneUsername,
+  updateUser,
+} = require("../repository/UserRepository");
 const bcrypt = require("bcrypt-nodejs");
 const jwt = require("../utils/jwt");
 // Registrar/Crear usuarios
@@ -52,12 +56,10 @@ async function login(req, res) {
       user.result.password,
       function (err, check) {
         if (check) {
-          res
-            .status(200)
-            .send({
-              message: "el usuario se encuentra logueado",
-              token: jwt.createToken(user.result),
-            });
+          res.status(200).send({
+            message: "el usuario se encuentra logueado",
+            token: jwt.createToken(user.result),
+          });
         } else {
           res.status(404).send({ message: "Usuario o contraseña Invalida" });
         }
@@ -68,7 +70,31 @@ async function login(req, res) {
   }
 }
 
+async function updateUserDataPassword(req, res) {
+  const params = req.body;
+  const userExiste = await FindOneUsername(params.usuario);
+
+  if (userExiste.result) {
+    const usuario = params.usuario; // Usar params.usuario en lugar de req.params["usuario"]
+    const body = req.body;
+
+    let user = new UserModel();
+    user.password = body.password;
+
+    bcrypt.hash(user.password, null, null, async function (err, hash) {
+      if (hash) {
+        user.password = hash;
+        const response = await updateUser(usuario, user);
+        res.status(response.status).send(response);
+      }
+    });
+  } else {
+    res.status(400).send({ message: "Usuario  Invalido" });
+  }
+}
+
 module.exports = {
   create,
   login,
+  updateUserDataPassword,
 };
